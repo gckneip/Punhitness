@@ -4,11 +4,13 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QDate
 
+from src.presentation.i18n import t
+
 
 class BodyMetricDialog(QDialog):
     def __init__(self, parent=None, entry=None):
         super().__init__(parent)
-        self.setWindowTitle("Edit Body Metric" if entry else "Log Body Metric")
+        self.setWindowTitle(t("dialog.body_metric.edit_title") if entry else t("dialog.body_metric.new_title"))
         self.setModal(True)
         self.resize(320, 200)
 
@@ -18,16 +20,16 @@ class BodyMetricDialog(QDialog):
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDate(QDate.currentDate())
-        form.addRow("Date:", self.date_edit)
+        form.addRow(t("field.date"), self.date_edit)
 
         self.bodyweight_spin = QDoubleSpinBox()
         self.bodyweight_spin.setRange(0, 500)
         self.bodyweight_spin.setDecimals(1)
         self.bodyweight_spin.setSuffix(" kg")
-        form.addRow("Bodyweight:", self.bodyweight_spin)
+        form.addRow(t("field.bodyweight"), self.bodyweight_spin)
 
         self.notes_edit = QLineEdit()
-        form.addRow("Notes:", self.notes_edit)
+        form.addRow(t("field.notes"), self.notes_edit)
 
         layout.addLayout(form)
 
@@ -43,7 +45,7 @@ class BodyMetricDialog(QDialog):
 
     def _validate_and_accept(self):
         if self.bodyweight_spin.value() <= 0:
-            QMessageBox.warning(self, "Warning", "Bodyweight must be greater than zero.")
+            QMessageBox.warning(self, t("common.warning"), t("msg.bodyweight_positive"))
             return
         self.accept()
 

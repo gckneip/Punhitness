@@ -3,18 +3,19 @@ from PySide6.QtWidgets import (
     QDialogButtonBox, QVBoxLayout, QHBoxLayout, QMessageBox,
     QTableWidget, QPushButton,
 )
+from src.presentation.i18n import t
 
 
 class RoutineDialog(QDialog):
     """`exercises` is the full ExerciseDTO catalog, used to populate each
     slot row's exercise picker."""
 
-    _COLUMNS = ["Exercise", "Sets", "Reps", "Weight (kg)"]
-
     def __init__(self, parent=None, routine=None, exercises=()):
         super().__init__(parent)
         self._exercises = list(exercises)
-        self.setWindowTitle("Edit Routine" if routine else "New Routine")
+        columns = [t("table.col.exercise"), t("table.routine_col.sets"),
+                   t("table.routine_col.reps"), t("table.routine_col.weight")]
+        self.setWindowTitle(t("dialog.routine.edit_title") if routine else t("dialog.routine.new_title"))
         self.setModal(True)
         self.resize(480, 420)
 
@@ -22,26 +23,27 @@ class RoutineDialog(QDialog):
         form = QFormLayout()
 
         self.name_edit = QLineEdit()
-        form.addRow("Name:", self.name_edit)
+        form.addRow(t("field.name"), self.name_edit)
 
         self.notes_edit = QLineEdit()
-        form.addRow("Notes:", self.notes_edit)
+        form.addRow(t("field.notes"), self.notes_edit)
 
         layout.addLayout(form)
 
-        self.table = QTableWidget(0, len(self._COLUMNS))
-        self.table.setHorizontalHeaderLabels(self._COLUMNS)
+        self.table = QTableWidget(0, len(columns))
+        self.table.setAlternatingRowColors(True)
+        self.table.setHorizontalHeaderLabels(columns)
         self.table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.table)
 
         row_buttons = QHBoxLayout()
-        add_btn = QPushButton("Add Slot")
+        add_btn = QPushButton(t("routine.add_slot"))
         add_btn.clicked.connect(lambda: self._add_row())
-        remove_btn = QPushButton("Remove Selected")
+        remove_btn = QPushButton(t("routine.remove_selected"))
         remove_btn.clicked.connect(self._remove_selected_row)
-        up_btn = QPushButton("Move Up")
+        up_btn = QPushButton(t("routine.move_up"))
         up_btn.clicked.connect(lambda: self._move_selected_row(-1))
-        down_btn = QPushButton("Move Down")
+        down_btn = QPushButton(t("routine.move_down"))
         down_btn.clicked.connect(lambda: self._move_selected_row(1))
         for btn in (add_btn, remove_btn, up_btn, down_btn):
             row_buttons.addWidget(btn)
@@ -106,15 +108,15 @@ class RoutineDialog(QDialog):
 
     def _validate_and_accept(self):
         if not self.name_edit.text().strip():
-            QMessageBox.warning(self, "Warning", "Name is required.")
+            QMessageBox.warning(self, t("common.warning"), t("msg.name_required"))
             return
         if self.table.rowCount() == 0:
-            QMessageBox.warning(self, "Warning", "Add at least one exercise slot.")
+            QMessageBox.warning(self, t("common.warning"), t("msg.add_one_slot"))
             return
         for row in range(self.table.rowCount()):
             combo = self.table.cellWidget(row, 0)
             if combo is None or combo.currentData() is None:
-                QMessageBox.warning(self, "Warning", "Every slot needs an exercise.")
+                QMessageBox.warning(self, t("common.warning"), t("msg.slot_needs_exercise"))
                 return
         self.accept()
 

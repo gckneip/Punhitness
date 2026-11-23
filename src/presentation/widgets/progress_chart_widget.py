@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel
 from src.presentation import theme
+from src.presentation.i18n import t
 
 
 class ProgressChartWidget(QWidget):
@@ -13,7 +14,7 @@ class ProgressChartWidget(QWidget):
 
         layout = QVBoxLayout(self)
         picker_row = QHBoxLayout()
-        picker_row.addWidget(QLabel("Exercise:"))
+        picker_row.addWidget(QLabel(t("chart.exercise_label")))
         self.exercise_combo = QComboBox()
         self.exercise_combo.currentIndexChanged.connect(self._refresh_plot)
         picker_row.addWidget(self.exercise_combo)
@@ -21,9 +22,8 @@ class ProgressChartWidget(QWidget):
         layout.addLayout(picker_row)
 
         self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground(theme.SURFACE)
-        self.plot_widget.setLabel("left", "Estimated 1RM (kg)")
-        self.plot_widget.setLabel("bottom", "Date")
+        self.plot_widget.setLabel("left", t("chart.estimated_1rm"))
+        self.plot_widget.setLabel("bottom", t("chart.date"))
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
         layout.addWidget(self.plot_widget)
 

@@ -66,6 +66,11 @@ def create_tables(conn):
             notes TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );
+
         CREATE INDEX IF NOT EXISTS idx_routine_exercise_slots_routine_id ON routine_exercise_slots(routine_id);
         CREATE INDEX IF NOT EXISTS idx_workout_sessions_session_date ON workout_sessions(session_date);
         CREATE INDEX IF NOT EXISTS idx_session_exercises_session_id ON session_exercises(session_id);

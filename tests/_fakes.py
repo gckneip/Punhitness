@@ -84,6 +84,48 @@ class FakeWorkoutSessionRepo:
         self._sessions.pop(session_id, None)
 
 
+class FakeAppSettingsRepo:
+    def __init__(self):
+        self._values = {}
+
+    def get(self, key):
+        return self._values.get(key)
+
+    def set(self, key, value):
+        self._values[key] = value
+
+
+class FakeThemeRepo:
+    """In-memory stand-in for FileThemeRepository. `builtins` maps a builtin
+    key (e.g. "dark") to its raw JSON text, mirroring the bundled presets."""
+
+    def __init__(self, builtins=None, custom_files=None):
+        self._builtins = dict(builtins or {})
+        self._custom = dict(custom_files or {})
+
+    def list_builtin_keys(self):
+        return sorted(self._builtins.keys())
+
+    def read_builtin_json(self, key):
+        return self._builtins[key]
+
+    def list_custom_files(self):
+        return sorted(self._custom.keys())
+
+    def read_custom_json(self, filename):
+        return self._custom[filename]
+
+    def save_custom_json(self, filename, raw_text):
+        candidate = filename if filename.endswith(".json") else f"{filename}.json"
+        counter = 2
+        while candidate in self._custom:
+            stem = filename.rsplit(".json", 1)[0]
+            candidate = f"{stem}-{counter}.json"
+            counter += 1
+        self._custom[candidate] = raw_text
+        return candidate
+
+
 class FakeBodyMetricRepo:
     def __init__(self, entries=()):
         self._entries = {e.id: e for e in entries}
