@@ -2,16 +2,22 @@ from PySide6.QtCore import Qt, QDate
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem, QPushButton, QComboBox, QDateEdit,
-    QMessageBox, QAbstractItemView,
+    QMessageBox, QAbstractItemView, QFileDialog, QToolButton,
 )
 
 from src.domain.entities.exercise import Exercise, MuscleGroup
 from src.application.dto.exercise_dto import CreateExerciseDTO
 from src.application.dto.routine_dto import CreateRoutineDTO, CreateRoutineSlotDTO
 from src.application.dto.body_metric_dto import CreateBodyMetricDTO
+from src.infrastructure.theming.theme_parser import ThemeParseError
+from src.presentation import icons
+from src.presentation.app_restart import restart_app
+from src.presentation.i18n import current_language, t
+from src.presentation.labels import muscle_group_label
 from src.presentation.dialogs.exercise_dialog import ExerciseDialog
 from src.presentation.dialogs.routine_dialog import RoutineDialog
 from src.presentation.dialogs.body_metric_dialog import BodyMetricDialog
+from src.presentation.dialogs.settings_dialog import SettingsDialog
 from src.presentation.widgets.session_editor_widget import SessionEditorWidget
 from src.presentation.widgets.progress_chart_widget import ProgressChartWidget
 from src.presentation.widgets.bodyweight_chart_widget import BodyweightChartWidget
@@ -27,6 +33,8 @@ class MainWindow(QMainWindow):
         body_metric_use_cases,
         progress_service,
         training_summary_service,
+        app_settings_use_cases,
+        theme_use_cases,
     ):
         super().__init__()
         self._exercise_use_cases = exercise_use_cases
@@ -35,8 +43,10 @@ class MainWindow(QMainWindow):
         self._body_metric_use_cases = body_metric_use_cases
         self._progress_service = progress_service
         self._training_summary_service = training_summary_service
+        self._app_settings_use_cases = app_settings_use_cases
+        self._theme_use_cases = theme_use_cases
 
-        self.setWindowTitle("Gym Tracker")
+        self.setWindowTitle(t("app.title"))
         self.resize(1000, 700)
         self._build_ui()
         self._reload_everything()
@@ -44,6 +54,14 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         self._tabs = QTabWidget()
         self.setCentralWidget(self._tabs)
+
+        settings_btn = QToolButton()
+        settings_btn.setIcon(icons.icon("fa6s.gear"))
+        settings_btn.setToolTip(t("dialog.settings.title"))
+        settings_btn.setAutoRaise(True)
+        settings_btn.clicked.connect(self._open_settings)
+        self._tabs.setCornerWidget(settings_btn, Qt.TopRightCorner)
+
         self._build_dashboard_tab()
         self._build_exercises_tab()
         self._build_routines_tab()
@@ -68,11 +86,11 @@ class MainWindow(QMainWindow):
 
         stats_row = QHBoxLayout()
         self._sessions_week_label = QLabel("0")
-        stats_row.addWidget(make_stat_card("Sessions / week", self._sessions_week_label))
+        stats_row.addWidget(make_stat_card(t("dashboard.stat.sessions_per_week"), self._sessions_week_label))
         self._streak_label = QLabel("0")
-        stats_row.addWidget(make_stat_card("Current streak (days)", self._streak_label))
+        stats_row.addWidget(make_stat_card(t("dashboard.stat.streak"), self._streak_label))
         self._last_bodyweight_label = QLabel("—")
-        stats_row.addWidget(make_stat_card("Last bodyweight", self._last_bodyweight_label))
+        stats_row.addWidget(make_stat_card(t("dashboard.stat.last_bodyweight"), self._last_bodyweight_label))
         layout.addLayout(stats_row)
 
         self._progress_chart = ProgressChartWidget(self._progress_service)
@@ -81,7 +99,7 @@ class MainWindow(QMainWindow):
         self._dashboard_bodyweight_chart = BodyweightChartWidget()
         layout.addWidget(self._dashboard_bodyweight_chart)
 
-        self._tabs.addTab(tab, "Dashboard")
+        self._tabs.addTab(tab, t("tab.dashboard"))
 
     def _refresh_dashboard(self):
         summary = self._training_summary_service.get_summary(days=30)
@@ -103,26 +121,29 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(tab)
 
         self._exercises_table = QTableWidget(0, 3)
-        self._exercises_table.setHorizontalHeaderLabels(["Name", "Muscle Group", "Equipment"])
+        self._exercises_table.setAlternatingRowColors(True)
+        self._exercises_table.setHorizontalHeaderLabels(
+            [t("table.col.name"), t("table.col.muscle_group"), t("table.col.equipment")]
+        )
         self._exercises_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._exercises_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._exercises_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self._exercises_table)
 
         btn_row = QHBoxLayout()
-        add_btn = QPushButton("Add")
+        add_btn = QPushButton(t("common.add"))
         add_btn.clicked.connect(self._add_exercise)
         btn_row.addWidget(add_btn)
-        edit_btn = QPushButton("Edit")
+        edit_btn = QPushButton(t("common.edit"))
         edit_btn.clicked.connect(self._edit_exercise)
         btn_row.addWidget(edit_btn)
-        delete_btn = QPushButton("Delete")
+        delete_btn = QPushButton(t("common.delete"))
         delete_btn.clicked.connect(self._delete_exercise)
         btn_row.addWidget(delete_btn)
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
-        self._tabs.addTab(tab, "Exercises")
+        self._tabs.addTab(tab, t("tab.exercises"))
 
     def _refresh_exercises_table(self):
         exercises = self._exercise_use_cases.list_exercises()
@@ -131,7 +152,7 @@ class MainWindow(QMainWindow):
             name_item = QTableWidgetItem(exercise.name)
             name_item.setData(Qt.UserRole, exercise.id)
             self._exercises_table.setItem(row, 0, name_item)
-            self._exercises_table.setItem(row, 1, QTableWidgetItem(exercise.muscle_group))
+            self._exercises_table.setItem(row, 1, QTableWidgetItem(muscle_group_label(exercise.muscle_group)))
             self._exercises_table.setItem(row, 2, QTableWidgetItem(exercise.equipment or ""))
         return exercises
 
@@ -167,7 +188,9 @@ class MainWindow(QMainWindow):
         exercise_id = self._selected_exercise_id()
         if exercise_id is None:
             return
-        if QMessageBox.question(self, "Delete Exercise", "Delete this exercise?") == QMessageBox.Yes:
+        if QMessageBox.question(
+            self, t("mainwindow.msg.delete_exercise.title"), t("mainwindow.msg.delete_exercise.body")
+        ) == QMessageBox.Yes:
             self._exercise_use_cases.delete_exercise(exercise_id)
             self._reload_everything()
 
@@ -178,26 +201,27 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(tab)
 
         self._routines_table = QTableWidget(0, 2)
-        self._routines_table.setHorizontalHeaderLabels(["Name", "Notes"])
+        self._routines_table.setAlternatingRowColors(True)
+        self._routines_table.setHorizontalHeaderLabels([t("table.col.name"), t("table.col.notes")])
         self._routines_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._routines_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._routines_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self._routines_table)
 
         btn_row = QHBoxLayout()
-        add_btn = QPushButton("Add")
+        add_btn = QPushButton(t("common.add"))
         add_btn.clicked.connect(self._add_routine)
         btn_row.addWidget(add_btn)
-        edit_btn = QPushButton("Edit")
+        edit_btn = QPushButton(t("common.edit"))
         edit_btn.clicked.connect(self._edit_routine)
         btn_row.addWidget(edit_btn)
-        delete_btn = QPushButton("Delete")
+        delete_btn = QPushButton(t("common.delete"))
         delete_btn.clicked.connect(self._delete_routine)
         btn_row.addWidget(delete_btn)
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
-        self._tabs.addTab(tab, "Routines")
+        self._tabs.addTab(tab, t("tab.routines"))
 
     def _refresh_routines_table(self):
         routines = self._routine_use_cases.list_routines()
@@ -225,7 +249,7 @@ class MainWindow(QMainWindow):
     def _add_routine(self):
         exercises = self._exercise_use_cases.list_exercises()
         if not exercises:
-            QMessageBox.warning(self, "Warning", "Add at least one exercise first.")
+            QMessageBox.warning(self, t("common.warning"), t("mainwindow.msg.need_exercise"))
             return
         dialog = RoutineDialog(self, exercises=exercises)
         if dialog.exec():
@@ -247,7 +271,9 @@ class MainWindow(QMainWindow):
         routine_id = self._selected_routine_id()
         if routine_id is None:
             return
-        if QMessageBox.question(self, "Delete Routine", "Delete this routine?") == QMessageBox.Yes:
+        if QMessageBox.question(
+            self, t("mainwindow.msg.delete_routine.title"), t("mainwindow.msg.delete_routine.body")
+        ) == QMessageBox.Yes:
             self._routine_use_cases.delete_routine(routine_id)
             self._reload_everything()
 
@@ -266,11 +292,11 @@ class MainWindow(QMainWindow):
         self._routine_picker_combo = QComboBox()
         start_row.addWidget(self._routine_picker_combo)
 
-        start_from_routine_btn = QPushButton("Start from Routine")
+        start_from_routine_btn = QPushButton(t("logsession.start_from_routine"))
         start_from_routine_btn.clicked.connect(self._start_from_routine)
         start_row.addWidget(start_from_routine_btn)
 
-        start_blank_btn = QPushButton("Start Blank Session")
+        start_blank_btn = QPushButton(t("logsession.start_blank"))
         start_blank_btn.clicked.connect(self._start_blank_session)
         start_row.addWidget(start_blank_btn)
         start_row.addStretch()
@@ -281,14 +307,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._session_editor)
 
         self._history_table = QTableWidget(0, 3)
-        self._history_table.setHorizontalHeaderLabels(["Date", "Routine", "Exercises"])
+        self._history_table.setAlternatingRowColors(True)
+        self._history_table.setHorizontalHeaderLabels(
+            [t("table.col.date"), t("table.col.routine"), t("table.col.exercises")]
+        )
         self._history_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._history_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._history_table.horizontalHeader().setStretchLastSection(True)
         self._history_table.cellDoubleClicked.connect(self._open_history_session)
         layout.addWidget(self._history_table)
 
-        self._tabs.addTab(tab, "Log Session / History")
+        self._tabs.addTab(tab, t("tab.log_session"))
 
     def _refresh_routine_picker(self):
         self._routine_picker_combo.clear()
@@ -314,7 +343,7 @@ class MainWindow(QMainWindow):
     def _start_from_routine(self):
         routine_id = self._routine_picker_combo.currentData()
         if routine_id is None:
-            QMessageBox.warning(self, "Warning", "Create a routine first.")
+            QMessageBox.warning(self, t("common.warning"), t("mainwindow.msg.need_routine"))
             return
         session = self._workout_session_use_cases.start_session_from_routine(
             routine_id, self._start_date_edit.date().toPython()
@@ -346,20 +375,23 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(tab)
 
         self._body_metrics_table = QTableWidget(0, 3)
-        self._body_metrics_table.setHorizontalHeaderLabels(["Date", "Bodyweight", "Notes"])
+        self._body_metrics_table.setAlternatingRowColors(True)
+        self._body_metrics_table.setHorizontalHeaderLabels(
+            [t("table.col.date"), t("table.col.bodyweight"), t("table.col.notes")]
+        )
         self._body_metrics_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._body_metrics_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._body_metrics_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self._body_metrics_table)
 
         btn_row = QHBoxLayout()
-        add_btn = QPushButton("Add")
+        add_btn = QPushButton(t("common.add"))
         add_btn.clicked.connect(self._add_body_metric)
         btn_row.addWidget(add_btn)
-        edit_btn = QPushButton("Edit")
+        edit_btn = QPushButton(t("common.edit"))
         edit_btn.clicked.connect(self._edit_body_metric)
         btn_row.addWidget(edit_btn)
-        delete_btn = QPushButton("Delete")
+        delete_btn = QPushButton(t("common.delete"))
         delete_btn.clicked.connect(self._delete_body_metric)
         btn_row.addWidget(delete_btn)
         btn_row.addStretch()
@@ -368,7 +400,7 @@ class MainWindow(QMainWindow):
         self._body_metrics_chart = BodyweightChartWidget()
         layout.addWidget(self._body_metrics_chart)
 
-        self._tabs.addTab(tab, "Body Metrics")
+        self._tabs.addTab(tab, t("tab.body_metrics"))
 
     def _refresh_body_metrics_table(self):
         entries = self._body_metric_use_cases.list_metrics()
@@ -408,6 +440,76 @@ class MainWindow(QMainWindow):
         entry_id = self._selected_body_metric_id()
         if entry_id is None:
             return
-        if QMessageBox.question(self, "Delete Entry", "Delete this entry?") == QMessageBox.Yes:
+        if QMessageBox.question(
+            self, t("mainwindow.msg.delete_entry.title"), t("mainwindow.msg.delete_entry.body")
+        ) == QMessageBox.Yes:
             self._body_metric_use_cases.delete_metric(entry_id)
             self._reload_everything()
+
+    # ---- Settings -------------------------------------------------------
+
+    def _open_settings(self):
+        current_theme_id = self._app_settings_use_cases.get_current_theme_id()
+        current_font_size = self._app_settings_use_cases.get_base_font_size()
+        current_language_code = current_language()
+        available_themes = self._theme_use_cases.list_available_themes()
+
+        dialog = SettingsDialog(
+            current_theme_id, available_themes, current_font_size,
+            current_language=current_language_code, parent=self,
+        )
+        dialog.import_theme_requested.connect(lambda: self._handle_theme_import(dialog))
+        if not dialog.exec():
+            return
+
+        data = dialog.get_data()
+        changed_language = data["language"] and data["language"] != current_language_code
+        changed_theme = data["theme_id"] and data["theme_id"] != current_theme_id
+        changed_font = data["base_font_size"] != current_font_size
+        if not (changed_language or changed_theme or changed_font):
+            return
+
+        box = QMessageBox(self)
+        box.setWindowTitle(t("settings.restart.title"))
+        box.setText(t("settings.restart.body"))
+        restart_button = box.addButton(t("settings.restart.restart_now"), QMessageBox.AcceptRole)
+        box.addButton(t("settings.restart.discard"), QMessageBox.RejectRole)
+        box.setDefaultButton(restart_button)
+        box.exec()
+        if box.clickedButton() is not restart_button:
+            return
+
+        if changed_language:
+            self._app_settings_use_cases.set_language(data["language"])
+        if changed_theme:
+            self._app_settings_use_cases.set_current_theme_id(data["theme_id"])
+        if changed_font:
+            self._app_settings_use_cases.set_base_font_size(data["base_font_size"])
+        restart_app()
+
+    def _handle_theme_import(self, dialog):
+        path, _ = QFileDialog.getOpenFileName(
+            self, t("mainwindow.dialog.import_theme.title"), "", t("mainwindow.dialog.import_theme.filter")
+        )
+        if not path:
+            return
+
+        try:
+            result = self._theme_use_cases.import_theme_file(path)
+        except ThemeParseError as exc:
+            QMessageBox.critical(
+                self, t("mainwindow.msg.import_error.title"),
+                t("mainwindow.msg.theme_import_error.body", error=exc),
+            )
+            return
+
+        all_themes = self._theme_use_cases.list_available_themes()
+        dialog.select_theme(result.theme_id, all_themes)
+
+        message = t("mainwindow.msg.theme_imported.body", name=result.name)
+        if result.warnings:
+            message += (
+                "\n\n" + t("mainwindow.msg.theme_imported.warnings", count=len(result.warnings))
+                + "\n" + "\n".join(result.warnings)
+            )
+        QMessageBox.information(self, t("mainwindow.msg.theme_imported.title"), message)

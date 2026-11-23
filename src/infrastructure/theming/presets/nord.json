@@ -1,0 +1,13 @@
+{
+  "name": "Nord",
+  "base": "light",
+  "bg_app": "#2E3440",
+  "surface": "#3B4252",
+  "border": "#434C5E",
+  "text_primary": "#ECEFF4",
+  "text_secondary": "#D8DEE9",
+  "primary": "#88C0D0",
+  "primary_hover": "#8FBCBB",
+  "primary_pressed": "#5E81AC",
+  "selection": "#4C566A"
+}

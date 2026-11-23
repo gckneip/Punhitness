@@ -9,6 +9,7 @@ from src.application.dto.workout_session_dto import (
 )
 from src.domain.entities.workout_session import SetEntry
 from src.presentation.dialogs.set_entry_dialog import SetEntryDialog
+from src.presentation.i18n import t
 
 
 class _ExerciseBlock:
@@ -38,9 +39,9 @@ class SessionEditorWidget(QWidget):
         form = QFormLayout()
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
-        form.addRow("Date:", self.date_edit)
+        form.addRow(t("field.date"), self.date_edit)
         self.note_edit = QLineEdit()
-        form.addRow("Note:", self.note_edit)
+        form.addRow(t("field.note"), self.note_edit)
         layout.addLayout(form)
 
         self._blocks_layout = QVBoxLayout()
@@ -49,7 +50,7 @@ class SessionEditorWidget(QWidget):
         add_exercise_row = QHBoxLayout()
         self.exercise_combo = QComboBox()
         add_exercise_row.addWidget(self.exercise_combo)
-        add_exercise_btn = QPushButton("Add Exercise")
+        add_exercise_btn = QPushButton(t("session.add_exercise"))
         add_exercise_btn.clicked.connect(self._add_exercise_block_from_combo)
         add_exercise_row.addWidget(add_exercise_btn)
         add_exercise_row.addStretch()
@@ -57,7 +58,7 @@ class SessionEditorWidget(QWidget):
 
         layout.addStretch()
 
-        save_btn = QPushButton("Save Session")
+        save_btn = QPushButton(t("session.save"))
         save_btn.setObjectName("primaryButton")
         save_btn.clicked.connect(self._save)
         layout.addWidget(save_btn)
@@ -80,7 +81,7 @@ class SessionEditorWidget(QWidget):
         for session_exercise in session_dto.exercises:
             block = _ExerciseBlock(
                 exercise_id=session_exercise.exercise_id,
-                exercise_name=names_by_id.get(session_exercise.exercise_id, "Unknown exercise"),
+                exercise_name=names_by_id.get(session_exercise.exercise_id, t("session.unknown_exercise")),
                 sets=[
                     {"weight": s.weight, "reps": s.reps, "rpe": s.rpe, "notes": s.notes}
                     for s in session_exercise.sets
@@ -94,7 +95,7 @@ class SessionEditorWidget(QWidget):
         if exercise_id is None:
             return
         if any(b.exercise_id == exercise_id for b in self._blocks):
-            QMessageBox.warning(self, "Warning", "This exercise is already in the session.")
+            QMessageBox.warning(self, t("common.warning"), t("msg.exercise_already_added"))
             return
         self._blocks.append(_ExerciseBlock(exercise_id, self.exercise_combo.currentText()))
         self._rebuild_blocks_ui()
@@ -110,23 +111,27 @@ class SessionEditorWidget(QWidget):
             group_layout = QVBoxLayout(group)
 
             table = QTableWidget(len(block.sets), 5)
-            table.setHorizontalHeaderLabels(["Set", "Weight", "Reps", "RPE", "Notes"])
+            table.setAlternatingRowColors(True)
+            table.setHorizontalHeaderLabels([
+                t("table.session_col.set"), t("table.session_col.weight"),
+                t("table.session_col.reps"), t("table.session_col.rpe"), t("table.col.notes"),
+            ])
             table.setEditTriggers(QTableWidget.NoEditTriggers)
             table.horizontalHeader().setStretchLastSection(True)
             self._fill_sets_table(table, block.sets)
             table.cellDoubleClicked.connect(
-                lambda row, _col, b=block, t=table: self._edit_set(b, t, row)
+                lambda row, _col, b=block, tbl=table: self._edit_set(b, tbl, row)
             )
             group_layout.addWidget(table)
 
             btn_row = QHBoxLayout()
-            add_set_btn = QPushButton("Add Set")
-            add_set_btn.clicked.connect(lambda _=False, b=block, t=table: self._add_set(b, t))
+            add_set_btn = QPushButton(t("session.add_set"))
+            add_set_btn.clicked.connect(lambda _=False, b=block, tbl=table: self._add_set(b, tbl))
             btn_row.addWidget(add_set_btn)
-            remove_set_btn = QPushButton("Remove Selected Set")
-            remove_set_btn.clicked.connect(lambda _=False, b=block, t=table: self._remove_set(b, t))
+            remove_set_btn = QPushButton(t("session.remove_selected_set"))
+            remove_set_btn.clicked.connect(lambda _=False, b=block, tbl=table: self._remove_set(b, tbl))
             btn_row.addWidget(remove_set_btn)
-            remove_exercise_btn = QPushButton("Remove Exercise")
+            remove_exercise_btn = QPushButton(t("session.remove_exercise"))
             remove_exercise_btn.clicked.connect(lambda _=False, b=block: self._remove_block(b))
             btn_row.addWidget(remove_exercise_btn)
             btn_row.addStretch()

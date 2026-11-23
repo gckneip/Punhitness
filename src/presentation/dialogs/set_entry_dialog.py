@@ -2,12 +2,13 @@ from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox,
     QDialogButtonBox, QVBoxLayout, QMessageBox,
 )
+from src.presentation.i18n import t
 
 
 class SetEntryDialog(QDialog):
     def __init__(self, parent=None, set_entry=None):
         super().__init__(parent)
-        self.setWindowTitle("Edit Set" if set_entry else "Add Set")
+        self.setWindowTitle(t("dialog.set.edit_title") if set_entry else t("dialog.set.new_title"))
         self.setModal(True)
         self.resize(300, 220)
 
@@ -18,20 +19,20 @@ class SetEntryDialog(QDialog):
         self.weight_spin.setRange(0, 1000)
         self.weight_spin.setDecimals(1)
         self.weight_spin.setSuffix(" kg")
-        form.addRow("Weight:", self.weight_spin)
+        form.addRow(t("field.weight"), self.weight_spin)
 
         self.reps_spin = QSpinBox()
         self.reps_spin.setRange(0, 200)
-        form.addRow("Reps:", self.reps_spin)
+        form.addRow(t("field.reps"), self.reps_spin)
 
         self.rpe_spin = QDoubleSpinBox()
         self.rpe_spin.setRange(0, 10)
         self.rpe_spin.setDecimals(1)
         self.rpe_spin.setSpecialValueText("—")
-        form.addRow("RPE:", self.rpe_spin)
+        form.addRow(t("field.rpe"), self.rpe_spin)
 
         self.notes_edit = QLineEdit()
-        form.addRow("Notes:", self.notes_edit)
+        form.addRow(t("field.notes"), self.notes_edit)
 
         layout.addLayout(form)
 
@@ -48,7 +49,7 @@ class SetEntryDialog(QDialog):
 
     def _validate_and_accept(self):
         if self.reps_spin.value() <= 0:
-            QMessageBox.warning(self, "Warning", "Reps must be greater than zero.")
+            QMessageBox.warning(self, t("common.warning"), t("msg.reps_positive"))
             return
         self.accept()
 

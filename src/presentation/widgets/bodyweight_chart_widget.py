@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from src.presentation import theme
+from src.presentation.i18n import t
 
 
 class BodyweightChartWidget(QWidget):
@@ -8,9 +9,8 @@ class BodyweightChartWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground(theme.SURFACE)
-        self.plot_widget.setLabel("left", "Bodyweight (kg)")
-        self.plot_widget.setLabel("bottom", "Date")
+        self.plot_widget.setLabel("left", t("chart.bodyweight"))
+        self.plot_widget.setLabel("bottom", t("chart.date"))
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
         layout.addWidget(self.plot_widget)
 

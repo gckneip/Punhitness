@@ -1,0 +1,13 @@
+{
+  "name": "Dark",
+  "base": "light",
+  "bg_app": "#14161c",
+  "surface": "#1e212b",
+  "border": "#2c303c",
+  "text_primary": "#e6e8ef",
+  "text_secondary": "#9aa0ae",
+  "primary": "#5b8df9",
+  "primary_hover": "#729bfa",
+  "primary_pressed": "#3f6fd6",
+  "selection": "#2d3a5c"
+}
