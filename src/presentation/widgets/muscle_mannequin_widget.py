@@ -48,6 +48,13 @@ _SVG_GROUP_TO_MUSCLE_GROUP: Dict[str, Optional[MuscleGroup]] = {
 _TAG_RE = re.compile(r'<g id="male-(?:front|rear)-(?:left|right)-[a-z_]+-\d+"[^>]*>')
 _ATTR_RE = re.compile(r'([\w-]+)="([^"]*)"')
 
+# The body outline (head, neck, hands, feet) isn't a muscle panel — it's one
+# "silhouette" path per view, baked into the artwork with a fixed dark fill
+# (#2a2c37) tuned for a light page. That's nearly invisible against a dark
+# theme's background (e.g. Dracula's #282A36), so it's always recolored to
+# theme.TEXT_PRIMARY rather than left at its baked-in color.
+_SILHOUETTE_RE = re.compile(r'<g id="(male-(?:front|rear)-silhouette-\d+)"')
+
 _HEAT_COLD = QColor("#dfe3ec")
 _HEAT_MID = QColor("#f6b93b")
 _HEAT_HOT = QColor("#e74c3c")
@@ -95,6 +102,8 @@ class _MuscleMapAsset:
         self.raw = svg_path.read_bytes()
         text = self.raw.decode("utf-8")
 
+        self.silhouette_ids: List[str] = _SILHOUETTE_RE.findall(text)
+
         self.ids_by_view_group: Dict[str, Dict[MuscleGroup, List[str]]] = {"front": {}, "rear": {}}
         for tag in _TAG_RE.findall(text):
             attrs = dict(_ATTR_RE.findall(tag))
@@ -117,18 +126,19 @@ class _MuscleMapAsset:
     def _svg_tag_end(self) -> int:
         return self.raw.index(b">", self.raw.index(b"<svg")) + 1
 
-    def display_bytes(self, color_overrides: Dict[MuscleGroup, str]) -> bytes:
+    def display_bytes(self, color_overrides: Dict[MuscleGroup, str], skin_color: str) -> bytes:
         """Base artwork with specific muscle-group panels (across both views)
         recolored via an injected <style> block. Targeting the panel's nested
         path (not the <g> wrapper) is required — the path's own fill
-        attribute otherwise wins over a rule on its ancestor."""
-        rules = [
+        attribute otherwise wins over a rule on its ancestor. The silhouette
+        (head/neck/hands/feet) is always repainted in skin_color, since its
+        baked-in fill has no theme awareness of its own."""
+        rules = [f'#{element_id} path{{fill:{skin_color} !important;}}' for element_id in self.silhouette_ids]
+        rules += [
             f'#{element_id} path{{fill:{color} !important;}}'
             for group, color in color_overrides.items()
             for element_id in self.ids_by_group_any_view.get(group, [])
         ]
-        if not rules:
-            return self.raw
         style = f"<style>{''.join(rules)}</style>".encode("utf-8")
         idx = self._svg_tag_end()
         return self.raw[:idx] + style + self.raw[idx:]
@@ -184,6 +194,7 @@ class _MannequinCanvas(QWidget):
         self._mask_view: Optional[str] = None
         self._mask_size: Optional[QSize] = None
         self._fit_target = QRectF()
+        self._rebuild_display_renderer()
 
     def sizeHint(self):
         return QSize(230, 480)
@@ -208,14 +219,14 @@ class _MannequinCanvas(QWidget):
     def _rebuild_display_renderer(self):
         overrides: Dict[MuscleGroup, str] = {}
         if self._intensities is not None:
-            for group, t in self._intensities.items():
-                overrides[group] = _heat_color(t)
+            for group, intensity in self._intensities.items():
+                overrides[group] = _heat_color(intensity)
         else:
             if self._selected is not None:
                 overrides[self._selected] = theme.PRIMARY
             if self._hovered is not None and self._hovered != self._selected:
                 overrides[self._hovered] = theme.SELECTION
-        data = self._asset.display_bytes(overrides)
+        data = self._asset.display_bytes(overrides, theme.TEXT_PRIMARY)
         self._display_renderer = QSvgRenderer(QByteArray(data))
         self.update()
 
@@ -451,7 +462,8 @@ class MuscleMannequinWidget(QWidget):
 
     def set_intensities(self, intensities: Dict[MuscleGroup, float], labels: Optional[Dict[MuscleGroup, str]] = None):
         body_intensities = {
-            g: t for g, t in intensities.items() if g not in (MuscleGroup.CARDIO, MuscleGroup.FULL_BODY)
+            g: intensity for g, intensity in intensities.items()
+            if g not in (MuscleGroup.CARDIO, MuscleGroup.FULL_BODY)
         }
         self._canvas.set_intensities(body_intensities, labels)
         if not self._selectable:
