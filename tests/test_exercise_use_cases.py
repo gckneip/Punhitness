@@ -1,5 +1,6 @@
 from src.domain.entities.exercise import MuscleGroup
 from src.application.dto.exercise_dto import CreateExerciseDTO
+from src.application.exercise_presets import DEFAULT_EXERCISES
 from src.application.use_cases.exercise_use_cases import ExerciseUseCases
 from tests._fakes import FakeExerciseRepo
 
@@ -37,3 +38,21 @@ def test_delete_exercise_removes_it_from_listing():
     created = uc.create_exercise(CreateExerciseDTO(name="Deadlift", muscle_group=MuscleGroup.BACK))
     uc.delete_exercise(created.id)
     assert uc.list_exercises() == []
+
+
+def test_seed_default_exercises_populates_an_empty_catalog():
+    uc = _use_cases()
+    uc.seed_default_exercises_if_empty()
+    exercises = uc.list_exercises()
+    assert len(exercises) == len(DEFAULT_EXERCISES)
+    muscle_groups = {e.muscle_group for e in exercises}
+    assert muscle_groups == {mg.value for mg in MuscleGroup}
+
+
+def test_seed_default_exercises_is_a_noop_if_catalog_is_not_empty():
+    uc = _use_cases()
+    uc.create_exercise(CreateExerciseDTO(name="My Custom Lift", muscle_group=MuscleGroup.CORE))
+    uc.seed_default_exercises_if_empty()
+    exercises = uc.list_exercises()
+    assert len(exercises) == 1
+    assert exercises[0].name == "My Custom Lift"

@@ -2,6 +2,7 @@ from typing import List, Optional
 from src.domain.entities.exercise import Exercise
 from src.domain.repositories.exercise_repository import ExerciseRepository
 from src.application.dto.exercise_dto import CreateExerciseDTO, ExerciseDTO
+from src.application.exercise_presets import DEFAULT_EXERCISES
 
 
 class ExerciseUseCases:
@@ -38,6 +39,17 @@ class ExerciseUseCases:
 
     def delete_exercise(self, exercise_id: str) -> None:
         self._exercise_repository.delete(exercise_id)
+
+    def seed_default_exercises_if_empty(self) -> None:
+        """Populates a well-known catalog across all muscle groups on first
+        run. Existing catalogs are never touched, so renames/deletions the
+        user makes afterward stick."""
+        if self._exercise_repository.find_all():
+            return
+        for preset in DEFAULT_EXERCISES:
+            self.create_exercise(
+                CreateExerciseDTO(name=preset.name, muscle_group=preset.muscle_group, equipment=preset.equipment)
+            )
 
     def _to_dto(self, exercise: Exercise) -> ExerciseDTO:
         return ExerciseDTO(

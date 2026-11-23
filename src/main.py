@@ -35,6 +35,7 @@ def main():
     body_metric_repo = SQLiteBodyMetricRepository(conn)
 
     exercise_use_cases = ExerciseUseCases(exercise_repo)
+    exercise_use_cases.seed_default_exercises_if_empty()
     routine_use_cases = RoutineUseCases(routine_repo)
     workout_session_use_cases = WorkoutSessionUseCases(workout_session_repo, routine_repo)
     body_metric_use_cases = BodyMetricUseCases(body_metric_repo)
