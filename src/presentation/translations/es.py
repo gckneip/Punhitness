@@ -122,4 +122,17 @@ TRANSLATIONS = {
     "enum.muscle_group.core": "Core",
     "enum.muscle_group.cardio": "Cardio",
     "enum.muscle_group.full_body": "Cuerpo Completo",
+
+    "exercises.filter_by_muscle": "Filtrar por Músculo",
+    "dashboard.muscles_worked": "Músculos Trabajados ({days}d)",
+    "dashboard.muscle_logged": "{count} registrado(s)",
+    "dashboard.muscle_no_activity": "sin actividad",
+    "routines.targets_title": "Objetivos de la Rutina",
+    "routines.hover_hint": "pasa el cursor sobre una rutina",
+    "routines.not_targeted": "sin objetivo",
+    "routines.exercise_count": "{count} ejercicio(s)",
+    "mannequin.switch_to_front": "Cambiar a vista frontal",
+    "mannequin.switch_to_back": "Cambiar a vista posterior",
+    "mannequin.legend.less": "Menos",
+    "mannequin.legend.more": "Más",
 }

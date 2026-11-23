@@ -1,4 +1,6 @@
-from PySide6.QtCore import Qt, QDate
+from typing import Optional
+
+from PySide6.QtCore import Qt, QDate, QEvent
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem, QPushButton, QComboBox, QDateEdit,
@@ -22,6 +24,7 @@ from src.presentation.widgets.session_editor_widget import SessionEditorWidget
 from src.presentation.widgets.progress_chart_widget import ProgressChartWidget
 from src.presentation.widgets.bodyweight_chart_widget import BodyweightChartWidget
 from src.presentation.widgets.stat_card import make_stat_card
+from src.presentation.widgets.muscle_mannequin_widget import MuscleMannequinWidget
 
 
 class MainWindow(QMainWindow):
@@ -45,6 +48,7 @@ class MainWindow(QMainWindow):
         self._training_summary_service = training_summary_service
         self._app_settings_use_cases = app_settings_use_cases
         self._theme_use_cases = theme_use_cases
+        self._muscle_filter: Optional[MuscleGroup] = None
 
         self.setWindowTitle(t("app.title"))
         self.resize(1000, 700)
@@ -93,11 +97,22 @@ class MainWindow(QMainWindow):
         stats_row.addWidget(make_stat_card(t("dashboard.stat.last_bodyweight"), self._last_bodyweight_label))
         layout.addLayout(stats_row)
 
+        muscles_row = QHBoxLayout()
+        self._muscles_worked_widget = MuscleMannequinWidget(
+            selectable=False, title=t("dashboard.muscles_worked", days=30), show_legend=True,
+        )
+        self._muscles_worked_widget.setFixedWidth(230)
+        muscles_row.addWidget(self._muscles_worked_widget)
+
+        charts_col = QVBoxLayout()
         self._progress_chart = ProgressChartWidget(self._progress_service)
-        layout.addWidget(self._progress_chart)
+        charts_col.addWidget(self._progress_chart)
 
         self._dashboard_bodyweight_chart = BodyweightChartWidget()
-        layout.addWidget(self._dashboard_bodyweight_chart)
+        charts_col.addWidget(self._dashboard_bodyweight_chart)
+        muscles_row.addLayout(charts_col, 1)
+
+        layout.addLayout(muscles_row)
 
         self._tabs.addTab(tab, t("tab.dashboard"))
 
@@ -114,11 +129,28 @@ class MainWindow(QMainWindow):
 
         self._dashboard_bodyweight_chart.set_entries(self._body_metric_use_cases.list_metrics())
 
+        distribution = summary.muscle_group_distribution
+        max_count = max(distribution.values()) if distribution else 0
+        intensities, labels = {}, {}
+        for group in MuscleGroup:
+            count = distribution.get(group.value, 0)
+            intensities[group] = (count / max_count) if max_count else 0.0
+            labels[group] = t("dashboard.muscle_logged", count=count) if count else t("dashboard.muscle_no_activity")
+        self._muscles_worked_widget.set_intensities(intensities, labels)
+
     # ---- Exercises ------------------------------------------------------
 
     def _build_exercises_tab(self):
         tab = QWidget()
-        layout = QVBoxLayout(tab)
+        outer = QHBoxLayout(tab)
+
+        self._exercise_mannequin = MuscleMannequinWidget(selectable=True, title=t("exercises.filter_by_muscle"))
+        self._exercise_mannequin.muscle_clicked.connect(self._on_exercise_muscle_filter_changed)
+        self._exercise_mannequin.setFixedWidth(230)
+        outer.addWidget(self._exercise_mannequin)
+
+        layout = QVBoxLayout()
+        outer.addLayout(layout, 1)
 
         self._exercises_table = QTableWidget(0, 3)
         self._exercises_table.setAlternatingRowColors(True)
@@ -145,10 +177,18 @@ class MainWindow(QMainWindow):
 
         self._tabs.addTab(tab, t("tab.exercises"))
 
+    def _on_exercise_muscle_filter_changed(self, group):
+        self._muscle_filter = group
+        self._refresh_exercises_table()
+
     def _refresh_exercises_table(self):
         exercises = self._exercise_use_cases.list_exercises()
-        self._exercises_table.setRowCount(len(exercises))
-        for row, exercise in enumerate(exercises):
+        filtered = (
+            [e for e in exercises if e.muscle_group == self._muscle_filter.value]
+            if self._muscle_filter else exercises
+        )
+        self._exercises_table.setRowCount(len(filtered))
+        for row, exercise in enumerate(filtered):
             name_item = QTableWidgetItem(exercise.name)
             name_item.setData(Qt.UserRole, exercise.id)
             self._exercises_table.setItem(row, 0, name_item)
@@ -198,7 +238,16 @@ class MainWindow(QMainWindow):
 
     def _build_routines_tab(self):
         tab = QWidget()
-        layout = QVBoxLayout(tab)
+        outer = QHBoxLayout(tab)
+
+        self._routine_mannequin = MuscleMannequinWidget(
+            selectable=False, title=t("routines.targets_title"), show_legend=True,
+        )
+        self._routine_mannequin.setFixedWidth(230)
+        outer.addWidget(self._routine_mannequin)
+
+        layout = QVBoxLayout()
+        outer.addLayout(layout, 1)
 
         self._routines_table = QTableWidget(0, 2)
         self._routines_table.setAlternatingRowColors(True)
@@ -206,6 +255,9 @@ class MainWindow(QMainWindow):
         self._routines_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._routines_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._routines_table.horizontalHeader().setStretchLastSection(True)
+        self._routines_table.setMouseTracking(True)
+        self._routines_table.cellEntered.connect(self._on_routine_row_hovered)
+        self._routines_table.viewport().installEventFilter(self)
         layout.addWidget(self._routines_table)
 
         btn_row = QHBoxLayout()
@@ -222,6 +274,45 @@ class MainWindow(QMainWindow):
         layout.addLayout(btn_row)
 
         self._tabs.addTab(tab, t("tab.routines"))
+        self._reset_routine_mannequin()
+
+    def eventFilter(self, obj, event):
+        if obj is self._routines_table.viewport() and event.type() == QEvent.Leave:
+            self._reset_routine_mannequin()
+        return super().eventFilter(obj, event)
+
+    def _on_routine_row_hovered(self, row, _col):
+        item = self._routines_table.item(row, 0)
+        if item is None:
+            return
+        routine_id = item.data(Qt.UserRole)
+        routine = self._routine_use_cases.get_routine(routine_id)
+        if routine is None:
+            return
+        self._update_routine_mannequin(routine)
+
+    def _reset_routine_mannequin(self):
+        intensities = {group: 0.0 for group in MuscleGroup}
+        labels = {group: t("routines.hover_hint") for group in MuscleGroup}
+        self._routine_mannequin.set_intensities(intensities, labels)
+
+    def _update_routine_mannequin(self, routine):
+        exercises_by_id = {e.id: e for e in self._exercise_use_cases.list_exercises()}
+        counts = {}
+        for slot in routine.slots:
+            exercise = exercises_by_id.get(slot.exercise_id)
+            if exercise is None:
+                continue
+            group = MuscleGroup(exercise.muscle_group)
+            counts[group] = counts.get(group, 0) + 1
+
+        max_count = max(counts.values()) if counts else 0
+        intensities, labels = {}, {}
+        for group in MuscleGroup:
+            count = counts.get(group, 0)
+            intensities[group] = (count / max_count) if max_count else 0.0
+            labels[group] = t("routines.exercise_count", count=count) if count else t("routines.not_targeted")
+        self._routine_mannequin.set_intensities(intensities, labels)
 
     def _refresh_routines_table(self):
         routines = self._routine_use_cases.list_routines()
