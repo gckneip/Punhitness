@@ -21,24 +21,34 @@ _SVG_PATH = Path(__file__).resolve().parent.parent / "assets" / "muscle_map" / "
 _VIEW_ELEMENT_ID = {"front": "male-front", "rear": "male-rear"}
 
 # The SVG tags each muscle panel with data-muscle-group (e.g. "upper_arms",
-# "quadriceps"); this app only filters/tracks by broad group, so several
-# collapse onto the same MuscleGroup. None means "rendered, not selectable"
-# (neck, joints, tendons/fascia — not a muscle an exercise targets).
+# "quadriceps"), which is coarser than this app's taxonomy for two groups:
+# "upper_arms" covers both biceps and triceps, and "core" covers both abs and
+# obliques. Those get resolved per-muscle via _MUSCLE_ID_OVERRIDES instead
+# (keyed by the panel's data-muscle-id, e.g. "triceps_brachii"); every other
+# panel in that group is unambiguous and falls through to the map below.
+# None means "rendered, not selectable" (neck, joints, tendons/fascia — not a
+# muscle an exercise targets).
+_MUSCLE_ID_OVERRIDES: Dict[str, MuscleGroup] = {
+    "biceps_brachii": MuscleGroup.BICEPS,
+    "brachialis": MuscleGroup.BICEPS,
+    "triceps_brachii": MuscleGroup.TRICEPS,
+    "rectus_abdominis": MuscleGroup.ABS,
+    "serratus_anterior": MuscleGroup.OBLIQUES,
+    "external_oblique": MuscleGroup.OBLIQUES,
+}
 _SVG_GROUP_TO_MUSCLE_GROUP: Dict[str, Optional[MuscleGroup]] = {
     "chest": MuscleGroup.CHEST,
     "upper_back": MuscleGroup.BACK,
     "lower_back": MuscleGroup.BACK,
     "shoulders": MuscleGroup.SHOULDERS,
-    "upper_arms": MuscleGroup.ARMS,
-    "forearms": MuscleGroup.ARMS,
-    "core": MuscleGroup.CORE,
-    "hips": MuscleGroup.LEGS,
-    "adductors": MuscleGroup.LEGS,
-    "quadriceps": MuscleGroup.LEGS,
-    "shins": MuscleGroup.LEGS,
-    "calves": MuscleGroup.LEGS,
-    "glutes": MuscleGroup.LEGS,
-    "hamstrings": MuscleGroup.LEGS,
+    "forearms": MuscleGroup.FOREARMS,
+    "hips": MuscleGroup.QUADS,
+    "adductors": MuscleGroup.QUADS,
+    "quadriceps": MuscleGroup.QUADS,
+    "shins": MuscleGroup.CALVES,
+    "calves": MuscleGroup.CALVES,
+    "glutes": MuscleGroup.GLUTES,
+    "hamstrings": MuscleGroup.HAMSTRINGS,
     "neck": None,
     "joints": None,
     "connective_tissue": None,
@@ -70,9 +80,15 @@ _MASK_COLORS: Dict[MuscleGroup, QColor] = {
     MuscleGroup.CHEST: QColor(237, 28, 36),
     MuscleGroup.BACK: QColor(0, 120, 220),
     MuscleGroup.SHOULDERS: QColor(240, 200, 0),
-    MuscleGroup.ARMS: QColor(0, 170, 90),
-    MuscleGroup.CORE: QColor(160, 30, 190),
-    MuscleGroup.LEGS: QColor(240, 130, 20),
+    MuscleGroup.BICEPS: QColor(0, 170, 90),
+    MuscleGroup.TRICEPS: QColor(0, 100, 60),
+    MuscleGroup.FOREARMS: QColor(90, 220, 215),
+    MuscleGroup.ABS: QColor(160, 30, 190),
+    MuscleGroup.OBLIQUES: QColor(225, 90, 185),
+    MuscleGroup.QUADS: QColor(240, 130, 20),
+    MuscleGroup.HAMSTRINGS: QColor(150, 95, 35),
+    MuscleGroup.GLUTES: QColor(120, 70, 180),
+    MuscleGroup.CALVES: QColor(60, 150, 210),
 }
 _MASK_LOOKUP = {color.rgb(): group for group, color in _MASK_COLORS.items()}
 
@@ -111,7 +127,9 @@ class _MuscleMapAsset:
             element_id = attrs.get("id")
             if view not in ("front", "rear") or not element_id:
                 continue
-            group = _SVG_GROUP_TO_MUSCLE_GROUP.get(attrs.get("data-muscle-group", ""))
+            group = _MUSCLE_ID_OVERRIDES.get(attrs.get("data-muscle-id", ""))
+            if group is None:
+                group = _SVG_GROUP_TO_MUSCLE_GROUP.get(attrs.get("data-muscle-group", ""))
             if group is None:
                 continue
             self.ids_by_view_group[view].setdefault(group, []).append(element_id)

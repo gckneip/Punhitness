@@ -27,14 +27,21 @@ DEFAULT_EXERCISES = [
     ExercisePreset("Seated Cable Row", MuscleGroup.BACK, "Cable"),
     ExercisePreset("T-Bar Row", MuscleGroup.BACK, "Barbell"),
 
-    # Legs
-    ExercisePreset("Squat", MuscleGroup.LEGS, "Barbell"),
-    ExercisePreset("Leg Press", MuscleGroup.LEGS, "Machine"),
-    ExercisePreset("Walking Lunge", MuscleGroup.LEGS, "Dumbbell"),
-    ExercisePreset("Leg Extension", MuscleGroup.LEGS, "Machine"),
-    ExercisePreset("Leg Curl", MuscleGroup.LEGS, "Machine"),
-    ExercisePreset("Romanian Deadlift", MuscleGroup.LEGS, "Barbell"),
-    ExercisePreset("Calf Raise", MuscleGroup.LEGS, "Machine"),
+    # Quads
+    ExercisePreset("Squat", MuscleGroup.QUADS, "Barbell"),
+    ExercisePreset("Leg Press", MuscleGroup.QUADS, "Machine"),
+    ExercisePreset("Walking Lunge", MuscleGroup.QUADS, "Dumbbell"),
+    ExercisePreset("Leg Extension", MuscleGroup.QUADS, "Machine"),
+
+    # Hamstrings
+    ExercisePreset("Leg Curl", MuscleGroup.HAMSTRINGS, "Machine"),
+    ExercisePreset("Romanian Deadlift", MuscleGroup.HAMSTRINGS, "Barbell"),
+
+    # Glutes
+    ExercisePreset("Hip Thrust", MuscleGroup.GLUTES, "Barbell"),
+
+    # Calves
+    ExercisePreset("Calf Raise", MuscleGroup.CALVES, "Machine"),
 
     # Shoulders
     ExercisePreset("Overhead Press", MuscleGroup.SHOULDERS, "Barbell"),
@@ -44,21 +51,29 @@ DEFAULT_EXERCISES = [
     ExercisePreset("Face Pull", MuscleGroup.SHOULDERS, "Cable"),
     ExercisePreset("Barbell Shrug", MuscleGroup.SHOULDERS, "Barbell"),
 
-    # Arms
-    ExercisePreset("Barbell Curl", MuscleGroup.ARMS, "Barbell"),
-    ExercisePreset("Dumbbell Curl", MuscleGroup.ARMS, "Dumbbell"),
-    ExercisePreset("Hammer Curl", MuscleGroup.ARMS, "Dumbbell"),
-    ExercisePreset("Tricep Pushdown", MuscleGroup.ARMS, "Cable"),
-    ExercisePreset("Skull Crusher", MuscleGroup.ARMS, "Barbell"),
-    ExercisePreset("Close-Grip Bench Press", MuscleGroup.ARMS, "Barbell"),
+    # Biceps
+    ExercisePreset("Barbell Curl", MuscleGroup.BICEPS, "Barbell"),
+    ExercisePreset("Dumbbell Curl", MuscleGroup.BICEPS, "Dumbbell"),
+    ExercisePreset("Hammer Curl", MuscleGroup.BICEPS, "Dumbbell"),
 
-    # Core
-    ExercisePreset("Plank", MuscleGroup.CORE, "Bodyweight"),
-    ExercisePreset("Crunch", MuscleGroup.CORE, "Bodyweight"),
-    ExercisePreset("Hanging Leg Raise", MuscleGroup.CORE, "Bodyweight"),
-    ExercisePreset("Russian Twist", MuscleGroup.CORE, "Bodyweight"),
-    ExercisePreset("Ab Wheel Rollout", MuscleGroup.CORE, "Ab Wheel"),
-    ExercisePreset("Sit-Up", MuscleGroup.CORE, "Bodyweight"),
+    # Triceps
+    ExercisePreset("Tricep Pushdown", MuscleGroup.TRICEPS, "Cable"),
+    ExercisePreset("Skull Crusher", MuscleGroup.TRICEPS, "Barbell"),
+    ExercisePreset("Close-Grip Bench Press", MuscleGroup.TRICEPS, "Barbell"),
+
+    # Forearms
+    ExercisePreset("Wrist Curl", MuscleGroup.FOREARMS, "Dumbbell"),
+
+    # Abs
+    ExercisePreset("Plank", MuscleGroup.ABS, "Bodyweight"),
+    ExercisePreset("Crunch", MuscleGroup.ABS, "Bodyweight"),
+    ExercisePreset("Hanging Leg Raise", MuscleGroup.ABS, "Bodyweight"),
+    ExercisePreset("Ab Wheel Rollout", MuscleGroup.ABS, "Ab Wheel"),
+    ExercisePreset("Sit-Up", MuscleGroup.ABS, "Bodyweight"),
+
+    # Obliques
+    ExercisePreset("Russian Twist", MuscleGroup.OBLIQUES, "Bodyweight"),
+    ExercisePreset("Side Plank", MuscleGroup.OBLIQUES, "Bodyweight"),
 
     # Cardio
     ExercisePreset("Running", MuscleGroup.CARDIO),

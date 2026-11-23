@@ -1,3 +1,6 @@
+from src.infrastructure.database.migrations import migrate_legacy_muscle_groups
+
+
 def create_tables(conn):
     conn.executescript("""
         PRAGMA foreign_keys=OFF;
@@ -81,3 +84,4 @@ def create_tables(conn):
         PRAGMA foreign_keys=ON;
     """)
     conn.commit()
+    migrate_legacy_muscle_groups(conn)

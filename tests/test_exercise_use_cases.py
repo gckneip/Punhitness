@@ -20,9 +20,9 @@ def test_create_exercise_round_trips_through_dto():
 
 def test_update_exercise_changes_fields():
     uc = _use_cases()
-    created = uc.create_exercise(CreateExerciseDTO(name="Squat", muscle_group=MuscleGroup.LEGS))
+    created = uc.create_exercise(CreateExerciseDTO(name="Squat", muscle_group=MuscleGroup.QUADS))
     updated = uc.update_exercise(
-        created.id, CreateExerciseDTO(name="Back Squat", muscle_group=MuscleGroup.LEGS, notes="go deep")
+        created.id, CreateExerciseDTO(name="Back Squat", muscle_group=MuscleGroup.QUADS, notes="go deep")
     )
     assert updated.name == "Back Squat"
     assert updated.notes == "go deep"
@@ -30,7 +30,7 @@ def test_update_exercise_changes_fields():
 
 def test_update_unknown_exercise_returns_none():
     uc = _use_cases()
-    assert uc.update_exercise("missing", CreateExerciseDTO(name="X", muscle_group=MuscleGroup.CORE)) is None
+    assert uc.update_exercise("missing", CreateExerciseDTO(name="X", muscle_group=MuscleGroup.ABS)) is None
 
 
 def test_delete_exercise_removes_it_from_listing():
@@ -51,7 +51,7 @@ def test_seed_default_exercises_populates_an_empty_catalog():
 
 def test_seed_default_exercises_is_a_noop_if_catalog_is_not_empty():
     uc = _use_cases()
-    uc.create_exercise(CreateExerciseDTO(name="My Custom Lift", muscle_group=MuscleGroup.CORE))
+    uc.create_exercise(CreateExerciseDTO(name="My Custom Lift", muscle_group=MuscleGroup.ABS))
     uc.seed_default_exercises_if_empty()
     exercises = uc.list_exercises()
     assert len(exercises) == 1

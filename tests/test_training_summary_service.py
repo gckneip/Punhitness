@@ -42,7 +42,7 @@ def test_total_volume_sums_weight_times_reps(monkeypatch):
 
 def test_muscle_group_distribution_counts_session_exercises(monkeypatch):
     bench = Exercise(name="Bench", muscle_group=MuscleGroup.CHEST)
-    squat = Exercise(name="Squat", muscle_group=MuscleGroup.LEGS)
+    squat = Exercise(name="Squat", muscle_group=MuscleGroup.QUADS)
     sessions = [
         _session(TODAY, exercise_id=bench.id),
         _session(TODAY, exercise_id=bench.id),
@@ -51,7 +51,7 @@ def test_muscle_group_distribution_counts_session_exercises(monkeypatch):
     svc = _service(sessions, exercises=[bench, squat])
     _patch_today(monkeypatch, svc)
     summary = svc.get_summary(days=30)
-    assert summary.muscle_group_distribution == {"Chest": 2, "Legs": 1}
+    assert summary.muscle_group_distribution == {"Chest": 2, "Quads": 1}
 
 
 def test_muscle_group_distribution_is_empty_without_exercise_repo(monkeypatch):
