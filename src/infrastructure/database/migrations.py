@@ -8,7 +8,7 @@ removed from the enum, reconstructing an Exercise from an old stored value
 first.
 """
 
-# Legs/Arms/Core were split into finer groups (see
+# Legs/Arms/Core/Back/Shoulders were split into finer groups (see
 # src/domain/entities/exercise.py). This is a frozen historical mapping of
 # the *old* default catalog's exercise names to their new group, independent
 # of src/application/exercise_presets.py (which keeps evolving) — a
@@ -33,10 +33,25 @@ _NAME_OVERRIDES = {
     "Russian Twist": "Obliques",
     "Ab Wheel Rollout": "Abs",
     "Sit-Up": "Abs",
+    "Deadlift": "Lower Back",
+    "Pull-Up": "Lats",
+    "Lat Pulldown": "Lats",
+    "Barbell Row": "Lats",
+    "Seated Cable Row": "Lats",
+    "T-Bar Row": "Lats",
+    "Barbell Shrug": "Traps",
+    "Overhead Press": "Front Delts",
+    "Front Raise": "Front Delts",
+    "Arnold Press": "Front Delts",
+    "Lateral Raise": "Side Delts",
+    "Face Pull": "Rear Delts",
 }
 # Anything else saved under the old broad group (user-renamed or custom
 # exercises) falls back to this subgroup rather than being left unreadable.
-_FALLBACK = {"Legs": "Quads", "Arms": "Biceps", "Core": "Abs"}
+_FALLBACK = {
+    "Legs": "Quads", "Arms": "Biceps", "Core": "Abs",
+    "Back": "Lats", "Shoulders": "Front Delts",
+}
 
 
 def migrate_legacy_muscle_groups(conn) -> None:

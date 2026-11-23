@@ -21,13 +21,14 @@ _SVG_PATH = Path(__file__).resolve().parent.parent / "assets" / "muscle_map" / "
 _VIEW_ELEMENT_ID = {"front": "male-front", "rear": "male-rear"}
 
 # The SVG tags each muscle panel with data-muscle-group (e.g. "upper_arms",
-# "quadriceps"), which is coarser than this app's taxonomy for two groups:
-# "upper_arms" covers both biceps and triceps, and "core" covers both abs and
-# obliques. Those get resolved per-muscle via _MUSCLE_ID_OVERRIDES instead
-# (keyed by the panel's data-muscle-id, e.g. "triceps_brachii"); every other
-# panel in that group is unambiguous and falls through to the map below.
-# None means "rendered, not selectable" (neck, joints, tendons/fascia — not a
-# muscle an exercise targets).
+# "quadriceps"), which is coarser than this app's taxonomy for three groups:
+# "upper_arms" covers both biceps and triceps, "core" covers both abs and
+# obliques, and "upper_back" covers both lats and traps/rotator cuff. Those
+# get resolved per-muscle via _MUSCLE_ID_OVERRIDES instead (keyed by the
+# panel's data-muscle-id, e.g. "triceps_brachii"); every other panel in that
+# group is unambiguous and falls through to the map below. None means
+# "rendered, not selectable" (neck, joints, tendons/fascia — not a muscle an
+# exercise targets).
 _MUSCLE_ID_OVERRIDES: Dict[str, MuscleGroup] = {
     "biceps_brachii": MuscleGroup.BICEPS,
     "brachialis": MuscleGroup.BICEPS,
@@ -35,12 +36,16 @@ _MUSCLE_ID_OVERRIDES: Dict[str, MuscleGroup] = {
     "rectus_abdominis": MuscleGroup.ABS,
     "serratus_anterior": MuscleGroup.OBLIQUES,
     "external_oblique": MuscleGroup.OBLIQUES,
+    "latissimus_dorsi": MuscleGroup.LATS,
+    "trapezius": MuscleGroup.TRAPS,
+    "posterior_rotator_cuff": MuscleGroup.TRAPS,
+    "anterior_deltoid": MuscleGroup.FRONT_DELTS,
+    "lateral_deltoid": MuscleGroup.SIDE_DELTS,
+    "posterior_deltoid": MuscleGroup.REAR_DELTS,
 }
 _SVG_GROUP_TO_MUSCLE_GROUP: Dict[str, Optional[MuscleGroup]] = {
     "chest": MuscleGroup.CHEST,
-    "upper_back": MuscleGroup.BACK,
-    "lower_back": MuscleGroup.BACK,
-    "shoulders": MuscleGroup.SHOULDERS,
+    "lower_back": MuscleGroup.LOWER_BACK,
     "forearms": MuscleGroup.FOREARMS,
     "hips": MuscleGroup.QUADS,
     "adductors": MuscleGroup.QUADS,
@@ -75,20 +80,25 @@ HEAT_GRADIENT_CSS = (
 )
 
 # Flat, maximally-distinct colors used only for the offscreen hit-test mask —
-# never shown to the user.
+# never shown to the user. Generated as 16 evenly-spaced hues (360/16 each)
+# at fixed saturation/value, so no two body-region groups can collide.
 _MASK_COLORS: Dict[MuscleGroup, QColor] = {
-    MuscleGroup.CHEST: QColor(237, 28, 36),
-    MuscleGroup.BACK: QColor(0, 120, 220),
-    MuscleGroup.SHOULDERS: QColor(240, 200, 0),
-    MuscleGroup.BICEPS: QColor(0, 170, 90),
-    MuscleGroup.TRICEPS: QColor(0, 100, 60),
-    MuscleGroup.FOREARMS: QColor(90, 220, 215),
-    MuscleGroup.ABS: QColor(160, 30, 190),
-    MuscleGroup.OBLIQUES: QColor(225, 90, 185),
-    MuscleGroup.QUADS: QColor(240, 130, 20),
-    MuscleGroup.HAMSTRINGS: QColor(150, 95, 35),
-    MuscleGroup.GLUTES: QColor(120, 70, 180),
-    MuscleGroup.CALVES: QColor(60, 150, 210),
+    MuscleGroup.CHEST: QColor(217, 43, 43),
+    MuscleGroup.LATS: QColor(217, 108, 43),
+    MuscleGroup.TRAPS: QColor(217, 173, 43),
+    MuscleGroup.LOWER_BACK: QColor(195, 217, 43),
+    MuscleGroup.FRONT_DELTS: QColor(130, 217, 43),
+    MuscleGroup.SIDE_DELTS: QColor(65, 217, 43),
+    MuscleGroup.REAR_DELTS: QColor(43, 217, 87),
+    MuscleGroup.BICEPS: QColor(43, 217, 152),
+    MuscleGroup.TRICEPS: QColor(43, 217, 217),
+    MuscleGroup.FOREARMS: QColor(43, 152, 217),
+    MuscleGroup.ABS: QColor(43, 87, 217),
+    MuscleGroup.OBLIQUES: QColor(65, 43, 217),
+    MuscleGroup.QUADS: QColor(130, 43, 217),
+    MuscleGroup.HAMSTRINGS: QColor(195, 43, 217),
+    MuscleGroup.GLUTES: QColor(217, 43, 173),
+    MuscleGroup.CALVES: QColor(217, 43, 108),
 }
 _MASK_LOOKUP = {color.rgb(): group for group, color in _MASK_COLORS.items()}
 

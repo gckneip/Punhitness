@@ -19,13 +19,18 @@ DEFAULT_EXERCISES = [
     ExercisePreset("Chest Dip", MuscleGroup.CHEST, "Bodyweight"),
     ExercisePreset("Cable Crossover", MuscleGroup.CHEST, "Cable"),
 
-    # Back
-    ExercisePreset("Deadlift", MuscleGroup.BACK, "Barbell"),
-    ExercisePreset("Pull-Up", MuscleGroup.BACK, "Bodyweight"),
-    ExercisePreset("Lat Pulldown", MuscleGroup.BACK, "Cable"),
-    ExercisePreset("Barbell Row", MuscleGroup.BACK, "Barbell"),
-    ExercisePreset("Seated Cable Row", MuscleGroup.BACK, "Cable"),
-    ExercisePreset("T-Bar Row", MuscleGroup.BACK, "Barbell"),
+    # Lats
+    ExercisePreset("Pull-Up", MuscleGroup.LATS, "Bodyweight"),
+    ExercisePreset("Lat Pulldown", MuscleGroup.LATS, "Cable"),
+    ExercisePreset("Barbell Row", MuscleGroup.LATS, "Barbell"),
+    ExercisePreset("Seated Cable Row", MuscleGroup.LATS, "Cable"),
+    ExercisePreset("T-Bar Row", MuscleGroup.LATS, "Barbell"),
+
+    # Traps
+    ExercisePreset("Barbell Shrug", MuscleGroup.TRAPS, "Barbell"),
+
+    # Lower Back
+    ExercisePreset("Deadlift", MuscleGroup.LOWER_BACK, "Barbell"),
 
     # Quads
     ExercisePreset("Squat", MuscleGroup.QUADS, "Barbell"),
@@ -43,13 +48,18 @@ DEFAULT_EXERCISES = [
     # Calves
     ExercisePreset("Calf Raise", MuscleGroup.CALVES, "Machine"),
 
-    # Shoulders
-    ExercisePreset("Overhead Press", MuscleGroup.SHOULDERS, "Barbell"),
-    ExercisePreset("Lateral Raise", MuscleGroup.SHOULDERS, "Dumbbell"),
-    ExercisePreset("Front Raise", MuscleGroup.SHOULDERS, "Dumbbell"),
-    ExercisePreset("Arnold Press", MuscleGroup.SHOULDERS, "Dumbbell"),
-    ExercisePreset("Face Pull", MuscleGroup.SHOULDERS, "Cable"),
-    ExercisePreset("Barbell Shrug", MuscleGroup.SHOULDERS, "Barbell"),
+    # Front Delts
+    ExercisePreset("Overhead Press", MuscleGroup.FRONT_DELTS, "Barbell"),
+    ExercisePreset("Front Raise", MuscleGroup.FRONT_DELTS, "Dumbbell"),
+    ExercisePreset("Arnold Press", MuscleGroup.FRONT_DELTS, "Dumbbell"),
+
+    # Side Delts
+    ExercisePreset("Lateral Raise", MuscleGroup.SIDE_DELTS, "Dumbbell"),
+    ExercisePreset("Upright Row", MuscleGroup.SIDE_DELTS, "Barbell"),
+
+    # Rear Delts
+    ExercisePreset("Face Pull", MuscleGroup.REAR_DELTS, "Cable"),
+    ExercisePreset("Reverse Fly", MuscleGroup.REAR_DELTS, "Dumbbell"),
 
     # Biceps
     ExercisePreset("Barbell Curl", MuscleGroup.BICEPS, "Barbell"),

@@ -6,8 +6,12 @@ from typing import Optional
 
 class MuscleGroup(Enum):
     CHEST = "Chest"
-    BACK = "Back"
-    SHOULDERS = "Shoulders"
+    LATS = "Lats"
+    TRAPS = "Traps"
+    LOWER_BACK = "Lower Back"
+    FRONT_DELTS = "Front Delts"
+    SIDE_DELTS = "Side Delts"
+    REAR_DELTS = "Rear Delts"
     BICEPS = "Biceps"
     TRICEPS = "Triceps"
     FOREARMS = "Forearms"

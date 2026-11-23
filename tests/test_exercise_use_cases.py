@@ -35,7 +35,7 @@ def test_update_unknown_exercise_returns_none():
 
 def test_delete_exercise_removes_it_from_listing():
     uc = _use_cases()
-    created = uc.create_exercise(CreateExerciseDTO(name="Deadlift", muscle_group=MuscleGroup.BACK))
+    created = uc.create_exercise(CreateExerciseDTO(name="Deadlift", muscle_group=MuscleGroup.LOWER_BACK))
     uc.delete_exercise(created.id)
     assert uc.list_exercises() == []
 
