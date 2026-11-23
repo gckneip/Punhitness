@@ -2,6 +2,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel
 from src.presentation import theme
 from src.presentation.i18n import t
+from src.presentation.labels import exercise_name_label
 
 
 class ProgressChartWidget(QWidget):
@@ -32,7 +33,7 @@ class ProgressChartWidget(QWidget):
         self.exercise_combo.blockSignals(True)
         self.exercise_combo.clear()
         for exercise in self._exercises:
-            self.exercise_combo.addItem(exercise.name, exercise.id)
+            self.exercise_combo.addItem(exercise_name_label(exercise.name), exercise.id)
         self.exercise_combo.blockSignals(False)
         self._refresh_plot()
 

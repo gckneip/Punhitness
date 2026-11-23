@@ -15,7 +15,7 @@ from src.infrastructure.theming.theme_parser import ThemeParseError
 from src.presentation import icons
 from src.presentation.app_restart import restart_app
 from src.presentation.i18n import current_language, t
-from src.presentation.labels import muscle_group_label
+from src.presentation.labels import exercise_name_label, muscle_group_label
 from src.presentation.dialogs.exercise_dialog import ExerciseDialog
 from src.presentation.dialogs.routine_dialog import RoutineDialog
 from src.presentation.dialogs.body_metric_dialog import BodyMetricDialog
@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         )
         self._exercises_table.setRowCount(len(filtered))
         for row, exercise in enumerate(filtered):
-            name_item = QTableWidgetItem(exercise.name)
+            name_item = QTableWidgetItem(exercise_name_label(exercise.name))
             name_item.setData(Qt.UserRole, exercise.id)
             self._exercises_table.setItem(row, 0, name_item)
             self._exercises_table.setItem(row, 1, QTableWidgetItem(muscle_group_label(exercise.muscle_group)))

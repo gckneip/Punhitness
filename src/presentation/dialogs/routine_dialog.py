@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QPushButton,
 )
 from src.presentation.i18n import t
+from src.presentation.labels import exercise_name_label
 
 
 class RoutineDialog(QDialog):
@@ -66,7 +67,7 @@ class RoutineDialog(QDialog):
 
         exercise_combo = QComboBox()
         for exercise in self._exercises:
-            exercise_combo.addItem(exercise.name, exercise.id)
+            exercise_combo.addItem(exercise_name_label(exercise.name), exercise.id)
         if slot is not None:
             index = exercise_combo.findData(slot.exercise_id)
             if index >= 0:

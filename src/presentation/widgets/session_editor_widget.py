@@ -10,6 +10,7 @@ from src.application.dto.workout_session_dto import (
 from src.domain.entities.workout_session import SetEntry
 from src.presentation.dialogs.set_entry_dialog import SetEntryDialog
 from src.presentation.i18n import t
+from src.presentation.labels import exercise_name_label
 
 
 class _ExerciseBlock:
@@ -67,7 +68,7 @@ class SessionEditorWidget(QWidget):
         self._exercises = list(exercises)
         self.exercise_combo.clear()
         for exercise in self._exercises:
-            self.exercise_combo.addItem(exercise.name, exercise.id)
+            self.exercise_combo.addItem(exercise_name_label(exercise.name), exercise.id)
 
     def load_session(self, session_dto):
         self._session_id = session_dto.id
@@ -77,7 +78,7 @@ class SessionEditorWidget(QWidget):
         self.note_edit.setText(session_dto.note or "")
 
         self._blocks = []
-        names_by_id = {e.id: e.name for e in self._exercises}
+        names_by_id = {e.id: exercise_name_label(e.name) for e in self._exercises}
         for session_exercise in session_dto.exercises:
             block = _ExerciseBlock(
                 exercise_id=session_exercise.exercise_id,
